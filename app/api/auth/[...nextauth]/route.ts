@@ -1,7 +1,20 @@
-import NextAuth from "next-auth";
+import NextAuth, { DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { kv } from "@vercel/kv";
 import bcrypt from "bcryptjs";
+
+// Extend the built-in session types
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string;
+        } & DefaultSession["user"];
+    }
+
+    interface User {
+        id: string;
+    }
+}
 
 const handler = NextAuth({
     providers: [
@@ -14,13 +27,25 @@ const handler = NextAuth({
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
-                const user = await kv.hgetall(`user:${credentials.email}`);
+                const user = (await kv.hgetall(
+                    `user:${credentials.email}`
+                )) as { password: string } | null;
 
                 if (
                     user &&
-                    (await bcrypt.compare(credentials.password, user.password))
+                    typeof user.password === "string" &&
+                    typeof credentials.password === "string"
                 ) {
-                    return { id: credentials.email, email: credentials.email };
+                    const isValid = await bcrypt.compare(
+                        credentials.password,
+                        user.password
+                    );
+                    if (isValid) {
+                        return {
+                            id: credentials.email,
+                            email: credentials.email,
+                        };
+                    }
                 }
                 return null;
             },
