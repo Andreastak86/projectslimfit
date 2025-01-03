@@ -6,6 +6,13 @@ export async function POST(request: Request) {
     try {
         const { email, password } = await request.json();
 
+        if (!email || !password) {
+            return NextResponse.json(
+                { error: "E-post og passord er påkrevd" },
+                { status: 400 }
+            );
+        }
+
         // Sjekk om brukeren allerede eksisterer
         const existingUser = await kv.hget(`user:${email}`, "password");
         if (existingUser) {
@@ -24,11 +31,12 @@ export async function POST(request: Request) {
             password: hashedPassword,
         });
 
+        console.log("Bruker registrert:", email);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Registreringsfeil:", error);
         return NextResponse.json(
-            { error: "Intern serverfeil" },
+            { error: "Intern serverfeil", details: (error as Error).message },
             { status: 500 }
         );
     }

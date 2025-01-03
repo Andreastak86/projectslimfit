@@ -21,14 +21,16 @@ export default function RegisterPage() {
                 body: JSON.stringify({ email, password }),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
                 router.push("/login?registered=true");
             } else {
-                const data = await response.json();
                 setError(data.error || "Noe gikk galt ved registrering.");
+                console.error("Registreringsfeil:", data);
             }
-        } catch (error: unknown) {
-            console.error("Registration error:", error);
+        } catch (error) {
+            console.error("Registreringsfeil:", error);
             setError("Noe gikk galt. Vennligst prøv igjen senere.");
         }
     };
