@@ -27,7 +27,8 @@ export default function RegisterPage() {
                 const data = await response.json();
                 setError(data.error || "Noe gikk galt ved registrering.");
             }
-        } catch (error) {
+        } catch (error: unknown) {
+            console.error("Registration error:", error);
             setError("Noe gikk galt. Vennligst prøv igjen senere.");
         }
     };
